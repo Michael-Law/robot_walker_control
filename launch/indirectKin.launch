@@ -1,0 +1,6 @@
+<launch>
+
+  <node name="move_group_indirect_kinematics" pkg="robot_walker_control" type="indirect_kinematics.py" respawn="false" output="screen">
+  </node>
+
+</launch>
