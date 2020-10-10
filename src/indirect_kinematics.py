@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from udm_hand_control.srv import *
+from srv import *
 import rospy
 import sys
 import copy
@@ -14,8 +14,7 @@ from moveit_commander.conversions import pose_to_list
 
 
 
-class groupService:
-
+class groupService: 
 	def __init__(self):
 		rospy.init_node('indirect_service_server'%(self.group_name))
 		self.group_name = rospy.get_param('~group_name', "Middle")

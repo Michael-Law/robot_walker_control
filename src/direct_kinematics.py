@@ -13,7 +13,6 @@ from moveit_commander.conversions import pose_to_list
 
 
 def all_close(goal, actual, tolerance):
-
   all_equal = True
   if type(goal) is list:
     for index in range(len(goal)):
@@ -30,7 +29,9 @@ def all_close(goal, actual, tolerance):
 
 
 class MoveGroupPythonIntefaceTutorial(object):
-  """MoveGroupPythonIntefaceTutorial"""
+  
+
+
   def __init__(self):
     super(MoveGroupPythonIntefaceTutorial, self).__init__()
 
@@ -38,7 +39,7 @@ class MoveGroupPythonIntefaceTutorial(object):
     ##
     ## First initialize `moveit_commander`_ and a `rospy`_ node:
     moveit_commander.roscpp_initialize(sys.argv)
-    rospy.init_node('move_group_python_interface_tutorial', anonymous=True)
+    rospy.init_node('move_group_python', anonymous=True)
 
     ## Instantiate a `RobotCommander`_ object. Provides information such as the robot's
     ## kinematic model and the robot's current joint states
@@ -48,8 +49,11 @@ class MoveGroupPythonIntefaceTutorial(object):
     ## for getting, setting, and updating the robot's internal understanding of the
     ## surrounding world:
     scene = moveit_commander.PlanningSceneInterface()
-    group = ["primary_left_leg","secondary_left_leg","tertiary_left_leg","primary_right_leg","secondary_right_leg","tertiary_right_leg"]
-    group_name = "primary_left_leg"
+
+    Group_list = robot.get_group_names()
+
+    group_name = Group_list[1]
+
     move_group = moveit_commander.MoveGroupCommander(group_name)
 
     ## Create a `DisplayTrajectory`_ ROS publisher which is used to display
@@ -96,11 +100,17 @@ class MoveGroupPythonIntefaceTutorial(object):
     # reason not to.
     move_group = self.move_group
 
+    ## BEGIN_SUB_TUTORIAL plan_to_joint_state
+    ##
+    ## Planning to a Joint Goal
+    ## ^^^^^^^^^^^^^^^^^^^^^^^^
+    ## The Panda's zero configuration is at a `singularity <https://www.quora.com/Robotics-What-is-meant-by-kinematic-singularity>`_ so the first
+    ## thing we want to do is move it to a slightly better configuration.
+    # We can get the joint values from the group and adjust some of the values:
     joint_goal = move_group.get_current_joint_values()
     joint_goal[0] = 0
-    joint_goal[1] = 0
-    joint_goal[2] = 0
-   
+    joint_goal[1] = pi/8
+    joint_goal[2] = -pi/8
 
     # The go command can be called with joint values, poses, or without any
     # parameters if you have already set the pose or joint target for the group
@@ -125,17 +135,6 @@ class MoveGroupPythonIntefaceTutorial(object):
     box_name = self.box_name
     scene = self.scene
 
-    ## BEGIN_SUB_TUTORIAL wait_for_scene_update
-    ##
-    ## Ensuring Collision Updates Are Receieved
-    ## ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-    ## If the Python node dies before publishing a collision object update message, the message
-    ## could get lost and the box will not appear. To ensure that the updates are
-    ## made, we wait until we see the changes reflected in the
-    ## ``get_attached_objects()`` and ``get_known_object_names()`` lists.
-    ## For the purpose of this tutorial, we call this function after adding,
-    ## removing, attaching or detaching an object in the planning scene. We then wait
-    ## until the updates have been made or ``timeout`` seconds have passed
     start = rospy.get_time()
     seconds = rospy.get_time()
     while (seconds - start < timeout) and not rospy.is_shutdown():
@@ -159,24 +158,15 @@ class MoveGroupPythonIntefaceTutorial(object):
     return False
     ## END_SUB_TUTORIAL
 
-
- 
-
 def main():
   try:
     print("")
     print("----------------------------------------------------------")
-    print("Welcome to the Moveit six legged walker")
-    print("----------------------------------------------------------")
-    print("Press Ctrl-D to exit at any time")
-    print("")
-    print("============ Press `Enter` to begin by setting up the moveit_commander ...")
-    raw_input()
-    tutorial = MoveGroupPythonIntefaceTutorial()
+    action = MoveGroupPythonIntefaceTutorial()
 
-    print("============ Press `Enter` to execute a movement using a joint state goal for leg group ...")
+    print("============ Press `Enter` to execute a movement using a joint state goal for the different legs")
     raw_input()
-    tutorial.go_to_joint_state()
+    action.go_to_joint_state()
 
   except rospy.ROSInterruptException:
     return
@@ -185,3 +175,4 @@ def main():
 
 if __name__ == '__main__':
   main()
+
