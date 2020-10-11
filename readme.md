@@ -7,7 +7,7 @@ For direct kinematis use:
 roslaunch robot_walker_control directKin.launch
 ```
 
-FOr inverse kinematics uses:
+For inverse kinematics use:
 
 ```sh
 roslaunch udm_hand_control indirect.launch
