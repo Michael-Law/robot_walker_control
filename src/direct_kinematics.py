@@ -9,6 +9,7 @@ import geometry_msgs.msg
 from math import pi
 from std_msgs.msg import String
 from moveit_commander.conversions import pose_to_list
+from itertools import cycle
 ## END_SUB_TUTORIAL
 
 
@@ -32,9 +33,11 @@ class MoveGroupPythonIntefaceTutorial(object):
   
 
 
-  def __init__(self):
+  def __init__(self,iteration,sequence):
     super(MoveGroupPythonIntefaceTutorial, self).__init__()
-
+   
+    self.iteration = iteration
+    self.sequence = sequence
     ## BEGIN_SUB_TUTORIAL setup
     ##
     ## First initialize `moveit_commander`_ and a `rospy`_ node:
@@ -51,8 +54,10 @@ class MoveGroupPythonIntefaceTutorial(object):
     scene = moveit_commander.PlanningSceneInterface()
 
     Group_list = robot.get_group_names()
-
-    group_name = Group_list[1]
+    
+    group_name = Group_list[self.iteration]
+    
+    
 
     move_group = moveit_commander.MoveGroupCommander(group_name)
 
@@ -74,16 +79,14 @@ class MoveGroupPythonIntefaceTutorial(object):
 
     # We can get a list of all the groups in the robot:
     group_names = robot.get_group_names()
-    print("============ Available Planning Groups:", robot.get_group_names())
+    # print("============ Available Planning Groups:", robot.get_group_names())
 
     # Sometimes for debugging it is useful to print the entire state of the
     # robot:
     # print("============ Printing robot state")
     # print(robot.get_current_state())
-    print("")
-    ## END_SUB_TUTORIAL
 
-    # Misc variables
+      # Misc variables
     self.box_name = ''
     self.robot = robot
     self.scene = scene
@@ -92,31 +95,32 @@ class MoveGroupPythonIntefaceTutorial(object):
     self.planning_frame = planning_frame
     self.eef_link = eef_link
     self.group_names = group_names
+   
+    ## END_SUB_TUTORIAL
 
+   
 
   def go_to_joint_state(self):
-    # Copy class variables to local variables to make the web tutorials more clear.
-    # In practice, you should use the class variables directly unless you have a good
-    # reason not to.
+    
     move_group = self.move_group
 
-    ## BEGIN_SUB_TUTORIAL plan_to_joint_state
-    ##
-    ## Planning to a Joint Goal
-    ## ^^^^^^^^^^^^^^^^^^^^^^^^
-    ## The Panda's zero configuration is at a `singularity <https://www.quora.com/Robotics-What-is-meant-by-kinematic-singularity>`_ so the first
-    ## thing we want to do is move it to a slightly better configuration.
-    # We can get the joint values from the group and adjust some of the values:
     joint_goal = move_group.get_current_joint_values()
-    joint_goal[0] = 0
-    joint_goal[1] = pi/8
-    joint_goal[2] = -pi/8
+    
+    print(joint_goal)
+    
+    if self.sequence == 0: 
+      joint_goal[0] = 0
+      joint_goal[1] = pi/8
+      joint_goal[2] = -pi/8
+    elif self.sequence == 1:
+      joint_goal[0] = 0
+      joint_goal[1] = 0
+      joint_goal[2] = 0
 
     # The go command can be called with joint values, poses, or without any
     # parameters if you have already set the pose or joint target for the group
     move_group.go(joint_goal, wait=True)
 
-    # Calling ``stop()`` ensures that there is no residual movement
     move_group.stop()
 
     ## END_SUB_TUTORIAL
@@ -125,47 +129,10 @@ class MoveGroupPythonIntefaceTutorial(object):
     current_joints = move_group.get_current_joint_values()
     return all_close(joint_goal, current_joints, 0.01)
 
-
-
-
-  def wait_for_state_update(self, box_is_known=False, box_is_attached=False, timeout=4):
-    # Copy class variables to local variables to make the web tutorials more clear.
-    # In practice, you should use the class variables directly unless you have a good
-    # reason not to.
-    box_name = self.box_name
-    scene = self.scene
-
-    start = rospy.get_time()
-    seconds = rospy.get_time()
-    while (seconds - start < timeout) and not rospy.is_shutdown():
-      # Test if the box is in attached objects
-      attached_objects = scene.get_attached_objects([box_name])
-      is_attached = len(attached_objects.keys()) > 0
-
-      # Test if the box is in the scene.
-      # Note that attaching the box will remove it from known_objects
-      is_known = box_name in scene.get_known_object_names()
-
-      # Test if we are in the expected state
-      if (box_is_attached == is_attached) and (box_is_known == is_known):
-        return True
-
-      # Sleep so that we give other threads time on the processor
-      rospy.sleep(0.1)
-      seconds = rospy.get_time()
-
-    # If we exited the while loop without returning then we timed out
-    return False
-    ## END_SUB_TUTORIAL
-
-def main():
+def main(index,sequence):
   try:
-    print("")
-    print("----------------------------------------------------------")
-    action = MoveGroupPythonIntefaceTutorial()
-
-    print("============ Press `Enter` to execute a movement using a joint state goal for the different legs")
-    raw_input()
+   
+    action = MoveGroupPythonIntefaceTutorial(index,sequence)
     action.go_to_joint_state()
 
   except rospy.ROSInterruptException:
@@ -174,5 +141,8 @@ def main():
     return
 
 if __name__ == '__main__':
-  main()
+  while  True:
+    for j in [i for i in range(2)]:
+      for i in [i for i in range(12) if i%2 != 0]: 
+        main(i,j)
 
